@@ -27,9 +27,20 @@ app.post('/users', (req, res) => {
     });
     user.save().then(doc => {
         console.log(doc);
+        res.send(doc);
     }, e => {
         res.status(400).send(e);
-    })
+    });
+});
+
+app.get('/todos', (req, res) => {
+    Todos.find({})
+        .then(todos => res.send({todos}), e => res.status(400).send(e));
+});
+
+app.get('/users', (req, res) => {
+    Users.find({})
+        .then(users => res.send({users}), e => res.status(400).send(e));
 });
 
 app.listen(port, () => {
