@@ -56,6 +56,18 @@ app.get('/users', (req, res) => {
         .then(users => res.send({users}), e => res.status(400).send(e));
 });
 
+app.delete('/todos/:id', (req, res) => {
+    const id = req.params.id;
+    if(!ObjectID.isValid(id))
+        return res.status(400).send({error: "Id is invalid, please try again."});
+    
+    Todos.findByIdAndRemove(id).then(todo => {
+        if(!todo)
+            return res.status(404).send({error: `Todo with id of ${id} was not found.`});
+        res.status(200).send();
+    }).catch(e => res.status(400).send({test: 'test'}));
+});
+
 app.listen(port, () => {
     console.log(`Server started on port ${port}`);
 });
