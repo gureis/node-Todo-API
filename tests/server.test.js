@@ -10,7 +10,9 @@ const todos = [{
     text: 'First test todo'
 }, {
     _id: new ObjectID(),
-    text: 'Second test todo'
+    text: 'Second test todo', 
+    completed: true,
+    completedAt: new Date()
     }, {
     _id: new ObjectID(),
     text: 'Third test todo',
@@ -104,47 +106,87 @@ describe('GET /todos/:id', () => {
             })
             .end(done);
     });
+});
 
-    describe('DELETE /todos/:id', () => {
-        it('should remove a todo', done => {
-            const id = todos[0]._id.toHexString();
-            request(app)
-                .delete(`/todos/${id}`)
-                .expect(200)
-                .expect(res => {
-                    expect(res.body.todo.text).toBe(todos[0].text);
-                })
-                .end((err, res) => {
-                    if (err)
-                        return done(err);
+describe('DELETE /todos/:id', () => {
+    it('should remove a todo', done => {
+        const id = todos[2]._id.toHexString();
+        request(app)
+            .delete(`/todos/${id}`)
+            .expect(200)
+            .expect(res => {
+                expect(res.body.todo.text).toBe(todos[2].text);
+            })
+            .end((err, res) => {
+                if (err)
+                    return done(err);
 
-                    Todos.findById(id).then(todo => {
-                        expect(todo).toNotExist();
-                        done();
-                    }).catch(e => done(e));
-                });
-        });
-
-        it('should return 404 if todo not found', done => {
-            const id = new ObjectID().toHexString();
-            request(app)
-                .delete(`/todos/${id}`)
-                .expect(404)
-                .expect(res => {
-                    expect(res.body.error).toBe(`Todo with id of ${id} was not found.`);
-                })
-                .end(done);
-        });
-
-        it('should return 400 if ID is invalid', done => {
-            const id = '1241531';
-            request(app)
-                .delete(`/todos/${id}`)
-                .expect(400)
-                .expect(res => {
-                    expect(res.body.error).toBe('Id is invalid, please try again.');
-                })
-                .end(done);
-        });
+                Todos.findById(id).then(todo => {
+                    expect(todo).toNotExist();
+                    done();
+                }).catch(e => done(e));
+            });
     });
+
+    it('should return 404 if todo not found', done => {
+        const id = new ObjectID().toHexString();
+        request(app)
+            .delete(`/todos/${id}`)
+            .expect(404)
+            .expect(res => {
+                expect(res.body.error).toBe(`Todo with id of ${id} was not found.`);
+            })
+            .end(done);
+    });
+
+    it('should return 400 if ID is invalid', done => {
+        const id = '1241531';
+        request(app)
+            .delete(`/todos/${id}`)
+            .expect(400)
+            .expect(res => {
+                expect(res.body.error).toBe('Id is invalid, please try again.');
+            })
+            .end(done);
+    });
+});
+
+describe('PATCH /todos/:id', () => {
+    it('should update the todo', done => {
+        const id = todos[0]._id.toHexString();
+        const updatedTodo = {
+            text: 'this text was updated',
+            completed: true
+        };
+        request(app)
+            .patch(`/todos/${id}`)
+            .send(updatedTodo)
+            .expect(200)
+            .expect(res => {
+                expect(res.body.todo.text).toBe(updatedTodo.text);
+                expect(res.body.todo.completed).toBe(updatedTodo.completed);
+                expect(res.body.todo.completedAt).toBeA('string');
+            })
+            .end(done);
+
+    });
+
+    it('should clear completedAt when todo is not completed', done => {
+        const id = todos[1]._id.toHexString();
+        const updatedTodo = {
+            text: 'This is the second updated todo',
+            completed: false
+        };
+        request(app)
+            .patch(`/todos/${id}`)
+            .send(updatedTodo)
+            .expect(200)
+            .expect(res => {
+                expect(res.body.todo.text).toBe(updatedTodo.text);
+                expect(res.body.todo.completed).toBe(updatedTodo.completed);
+                expect(res.body.todo.completedAt) .toNotExist();
+            })
+            .end(done);
+    });
+
 });
