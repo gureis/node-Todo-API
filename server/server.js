@@ -23,18 +23,6 @@ app.post('/todos', (req, res) => {
     });
 });
 
-app.post('/users', (req, res) => {
-    const user = new Users({
-        email: req.body.email
-    });
-    user.save().then(doc => {
-        console.log(doc);
-        res.send(doc);
-    }, e => {
-        res.status(400).send(e);
-    });
-});
-
 app.get('/todos', (req, res) => {
     Todos.find({})
         .then(todos => res.send({todos}), e => res.status(400).send(e));
@@ -50,11 +38,6 @@ app.get(`/todos/:id`, (req, res) => {
             return res.status(404).send({error: `Todo not Found`});
         res.status(200).send({ todo });
     }).catch(e => res.status(400).send());
-});
-
-app.get('/users', (req, res) => {
-    Users.find({})
-        .then(users => res.send({users}), e => res.status(400).send(e));
 });
 
 app.delete('/todos/:id', (req, res) => {
@@ -90,6 +73,23 @@ app.patch('/todos/:id', (req, res) => {
         res.status(200).send({todo});
     }).catch(e => res.status(400).send());
 
+});
+
+app.post('/users', (req, res) => {
+    const body = _.pick(req.body, ['email', 'password']);
+    const user = new Users({ ...body });
+    user.save().then(() => {
+        return user.generateAuthToken();
+    }).then(token => {
+        res.header('x-auth', token).status(200).send(user);
+    }).catch( e => {
+            res.status(400).send(e);
+    });
+});
+
+app.get('/users', (req, res) => {
+    Users.find({})
+        .then(users => res.send({ users }), e => res.status(400).send(e));
 });
 
 app.listen(port, () => {
