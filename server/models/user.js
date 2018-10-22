@@ -46,12 +46,30 @@ User.methods = {
             return token;
         });
     },
-
     toJSON: function () {
         const user = this;
         const userObj = user.toObject();
 
         return _.pick(userObj, ['_id', 'email']);
+    },
+}
+
+User.statics = {
+    findByToken: function (token) {
+        const Users = this;
+        let decoded;
+
+        try {
+            decoded = jwt.verify(token, 'abc123');
+        }catch (e) {
+            return Promise.reject();
+        }
+
+        return Users.findOne({
+            '_id': decoded._id,
+            'tokens.token': token,
+            'tokens.access': 'auth'
+        });
     }
 }
 
